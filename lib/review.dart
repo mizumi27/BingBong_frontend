@@ -1,5 +1,8 @@
 import 'dart:io';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -9,6 +12,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:spring_button/spring_button.dart';
 import 'package:path/path.dart';
 import 'package:video_record_upload/api/firebase_api.dart';
+import 'package:video_record_upload/api/python_api.dart';
+import 'package:video_record_upload/recommend.dart';
+import 'package:video_record_upload/test.dart';
 
 class Review extends StatefulWidget{
   Review(this.file, {Key? key}) : super(key: key);
@@ -123,8 +129,9 @@ class _ReviewState extends State<Review> {
           ),
         ),
         onTap: () async {
-          //Firebaseへ送信
-          //await uploadVideo(file);
+          //Firebaseへ送信＆計算＆画面遷移
+          await calculateVideo(file, context);
+
           print("Video Path ${file!.path}");
           //_controller?.play();
         },
@@ -183,6 +190,7 @@ class _ReviewState extends State<Review> {
         future: test,
         builder: (BuildContext context, AsyncSnapshot snapshot) {
           if(snapshot.connectionState == ConnectionState.done) {
+
             return Stack(
               children: [
                 _previewVideo(),
@@ -264,18 +272,65 @@ class _ReviewState extends State<Review> {
   }
 }
 
-Future<void> uploadVideo(XFile? videoFile) async {
+Future<void> calculateVideo(XFile? videoFile, BuildContext context) async {
   print("Uploading Video");
 
   if (videoFile == null) return;
+
+  //AndroidかiOSかを確認
+  DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+  String? userID;
+  if(Platform.isAndroid) {
+    AndroidDeviceInfo infoID = await deviceInfo.androidInfo;
+    userID = infoID.androidId;
+    print('Runnning on ${infoID.androidId}');
+  }
+  else if(Platform.isIOS) {
+    IosDeviceInfo infoID = await deviceInfo.iosInfo;
+    userID = infoID.identifierForVendor;
+    print('Runnning on ${infoID.identifierForVendor}');
+  }
+  else {
+    //その他の機器の場合、noNameフォルダへ送信
+    userID = "noName";
+  }
 
   //Convert so it can be uploaded
   File file = File(videoFile.path);
 
   final fileName = basename(file.path);
-  final firebaseDest = 'userFiles/$fileName';
+  final folderName = fileName.substring(0, fileName.length - 4);
+  final firebaseDest = 'userFiles/$userID/$folderName/$fileName';
 
-  FirebaseApi.uploadFile(firebaseDest, file);
+  print("A");
+  print(fileName);
+  print(firebaseDest);
+  print("B");
+
+  //await FirebaseApi.uploadFile(firebaseDest, file);
+
+  //python APIを叩く→firebaseに入ってる場所を取得できる
+  //final response = await http.get(Uri.parse('http://10.0.2.2:5000/api/user_videos?user_id=${userID}&video_id=${folderName}'));
+  //final response = await http.get(Uri.parse('https://joshuaravishankar-fa39413gbz992ckl.socketxp.com/api/?user_id=${userID}&video_id={$folderName}&technique_id=forehand_shakehold'));
+  //final response = await http.get(Uri.parse('https://joshuaravishankar-fa39413gbz992ckl.socketxp.com/api/?user_id=PengZhiyu&video_id=completely_wrong&technique_id=forehand_shakehold'));
+  //print(response.statusCode);
+  //print(jsonDecode(response.body));
+  //print(response.body);
+
+  //firebaseからもってくる処理
+  //XFile videoLocation = await FirebaseApi.downloadFile("userFiles/PengZhiyu/completely_wrong/recommendation.mp4");
+  print("download OK");
+
+  final storageRef = FirebaseStorage.instance.ref();
+  final imageUrl = await storageRef.child("userFiles/PengZhiyu/completely_wrong/recommendation.mp4").getDownloadURL();
+
+  //final videoData = FirebaseApi.downloadFile(firebaseDest);
+
+  //画面遷移
+  /*Navigator.push(
+    context,
+    MaterialPageRoute(builder: (context) => Test(imageUrl)),
+  );*/
 }
 
 class AspectRatioVideo extends StatefulWidget {

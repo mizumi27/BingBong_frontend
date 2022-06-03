@@ -1,7 +1,11 @@
 import 'dart:io';
 
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:video_record_upload/pro_video.dart';
+import 'package:video_record_upload/test.dart';
+import 'package:video_record_upload/stream.dart';
+import 'package:video_record_upload/test.dart';
 
 const MaterialColor customSwatch = MaterialColor(
   0xFFB71C1C,
@@ -85,9 +89,18 @@ class _MenuPageState extends State<Menupage> {
                 ),
               ),
               onPressed: () async {
+                /*await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => StackedVideoView()),
+                );*/
+
+                //ビデオ取得のテスト
+                final storageRef = FirebaseStorage.instance.ref();
+                final imageUrl = await storageRef.child("/userFiles/PengZhiyu/completely_wrong/recommendation.mp4").getDownloadURL();
+                print(imageUrl);
                 await Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => ProVideo()),
+                  MaterialPageRoute(builder: (context) => Test()),
                 );
               },
             ),
@@ -106,9 +119,8 @@ class _MenuPageState extends State<Menupage> {
         automaticallyImplyLeading: false,
         centerTitle: true,
         title: const Image(
-          image: AssetImage("assets/image/image003.jpg"),
-          width: 50,
-          height: 25,
+          image: AssetImage("assets/image/logo.png"),
+          width: 180,
           fit: BoxFit.fill,
         ),
         actions: <Widget>[
@@ -125,7 +137,7 @@ class _MenuPageState extends State<Menupage> {
       // データを元にListViewを作成
       body: Center(
         child: Container(
-          color: const Color.fromRGBO(255, 215, 130, 1),
+          color: const Color.fromRGBO(255, 215, 130, 1.0),
           height: 500,
           width: double.infinity,
           child: SingleChildScrollView(
