@@ -11,29 +11,36 @@ import 'package:video_player/video_player.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:spring_button/spring_button.dart';
 import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:dio/dio.dart';
+import 'package:gallery_saver/gallery_saver.dart';
 import 'package:video_record_upload/api/firebase_api.dart';
 import 'package:video_record_upload/api/python_api.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 
 class Recommend extends StatefulWidget{
-  Recommend(this.file, {Key? key}) : super(key: key);
+  Recommend(this.file, this.id, {Key? key}) : super(key: key);
   XFile? file;
+  String id;
   @override
   // ignore: no_logic_in_create_state
-  State<Recommend> createState() => _RecommendState(file);
+  State<Recommend> createState() => _RecommendState(file, id);
 }
 
 // ignore: must_be_immutable
 class _RecommendState extends State<Recommend> {
 
-  _RecommendState(this.file);
+  _RecommendState(this.file, this.id);
   XFile? file;
+  String id;
   VideoPlayerController? _controller;
   Future? test;
 
   @override
   void initState() {
     print(file);
-    test = _playVideo(file);
+    test = calculateVideo(file);
     super.initState();
   }
 
@@ -49,10 +56,192 @@ class _RecommendState extends State<Recommend> {
     super.deactivate();
   }
 
+  //動画をFirebaseに送信
+  Future<void> calculateVideo(XFile? videoFile) async {
+    print("Uploading Video");
+
+    if (videoFile == null) return;
+
+    //AndroidかiOSかを確認
+    DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+    String? userID;
+    if(Platform.isAndroid) {
+      AndroidDeviceInfo infoID = await deviceInfo.androidInfo;
+      userID = infoID.androidId;
+      print('Runnning on ${infoID.androidId}');
+    }
+    else if(Platform.isIOS) {
+      IosDeviceInfo infoID = await deviceInfo.iosInfo;
+      userID = infoID.identifierForVendor;
+      print('Runnning on ${infoID.identifierForVendor}');
+    }
+    else {
+      //その他の機器の場合、noNameフォルダへ送信
+      userID = "noName";
+    }
+
+    //Convert so it can be uploaded
+    File filePath = File(videoFile.path);
+
+    final fileName = basename(filePath.path);
+    final folderName = fileName.substring(0, fileName.length - 4);  //folderNameは.MOVがついていないやつ
+    final firebaseDest = 'userFiles/$userID/$folderName/$fileName';
+
+    print("A");
+    print(fileName);
+    print(firebaseDest);
+    print("B");
+
+
+    //撮影した動画をFirebaseに送信
+    //await FirebaseApi.uploadFile(firebaseDest, filePath);
+
+    //idによって動画のジャンルを決定(時間がないので直感的なコードを書いた)
+    String genre;
+    if(id == "1") genre = "forehand_shakehold_drive";
+    else if(id == "2") genre = "backhand_shakehold_drive";
+    else if(id == "3") genre = "forehand_shakehold_slice";
+    else genre = "backhand_shakehold_drive";
+
+    print("Flask API");
+
+    //python APIを叩く→firebaseに入ってる場所を取得できる
+    //Assertion Error(計算できない)の場合は動画を取り直す画面を表示したい
+    //final response = await http.get(Uri.parse('https://joshuaravishankar-fa39413gbz992ckl.socketxp.com/api/?user_id=${userID}&video_id=${folderName}&technique_id=${genre}'));
+    final response = await http.get(Uri.parse('https://joshuaravishankar-fa39413gbz992ckl.socketxp.com/api/?user_id=PengZhiyu&video_id=completely_wrong&technique_id=forehand_shakehold'));
+    print(response.statusCode);
+    print("nomal response.body:");
+    print(response.body);
+    print("response owari");
+
+    Map<String, String> responseMap = json.decode(response.body[0]);
+    final responseDict = responseMap['dest'];
+
+    print("responseDict:");
+    print(responseDict);
+
+
+
+    //firebaseからもってくる処理
+    final storageRef = FirebaseStorage.instance.ref();
+    print("storegeRef");
+    print(storageRef);
+    final ref = storageRef.child("/userFiles/PengZhiyu/completely_wrong/recommendation.mp4");
+    //final ref = storageRef.child("/" + responseDict!);
+    print("ref");
+    print(ref);
+    final url = await ref.getDownloadURL();
+    print("url");
+    print(url);
+
+    final tempDir = await getTemporaryDirectory();
+    final path = '${tempDir.path}/${ref.name}';
+    await Dio().download(url, path);
+
+    if (url.contains('.mp4')) {
+      await GallerySaver.saveVideo(path, toDcim: true);
+    }
+
+    //このresultFileにFlackAPIからFirebaseからダウンロードしてきた動画のアドレスを入れる
+    await _playVideo('${tempDir.path}/${ref.name}');
+  }
+
+  Widget menuButton(BuildContext context) {
+    return SizedBox(
+      height: 100.h,
+      width: 175.w,
+      child: SpringButton(
+          SpringButtonType.WithOpacity,
+          Padding(
+            padding: const EdgeInsets.all(14),
+            child: Container(
+              decoration: BoxDecoration(
+                color: const Color.fromRGBO(0, 26, 67, 1),
+                border: Border.all(color: Colors.white),
+                borderRadius: const BorderRadius.all(Radius.circular(30.0)),
+              ),
+              child: Center(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.arrow_back,
+                      color: Colors.white,
+                      size: 50.sp,
+                    ),
+                    Text(
+                      '終了',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 30.sp,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          onTap: () async {
+            await Future.delayed(const Duration(milliseconds: 80));
+            Navigator.pop(context);
+            Navigator.pop(context);
+            Navigator.pop(context);
+          }
+      ),
+    );
+  }
+
+  Widget retakeButton(BuildContext context) {
+    return SizedBox(
+      height: 100.h,
+      width: 230.w,
+      child: SpringButton(
+          SpringButtonType.WithOpacity,
+          Padding(
+            padding: const EdgeInsets.all(14),
+            child: Container(
+              decoration: BoxDecoration(
+                color: const Color.fromRGBO(125, 2, 10, 1.0),
+                border: Border.all(color: Colors.white),
+                borderRadius: const BorderRadius.all(Radius.circular(30.0)),
+              ),
+              child: Center(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.refresh,
+                      color: Colors.white,
+                      size: 50.sp,
+                    ),
+                    Text(
+                      '撮り直す',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 30.sp,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          onTap: () async {
+            await Future.delayed(const Duration(milliseconds: 80));
+            Navigator.pop(context);
+            Navigator.pop(context);
+          }
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
 
     return Scaffold(
+      backgroundColor: const Color.fromRGBO(255, 215, 130, 1),
       body: FutureBuilder(
         future: test,
         builder: (BuildContext context, AsyncSnapshot snapshot) {
@@ -61,11 +250,34 @@ class _RecommendState extends State<Recommend> {
             return Stack(
               children: [
                 _previewVideo(),
+                Align(
+                  alignment: const Alignment(-0.87, 1.02),
+                  child: menuButton(context),
+                ),
+                Align(
+                  alignment: const Alignment(0.87, 1.02),
+                  child: retakeButton(context),
+                ),
               ],
             );
           } else {
-            return const Center(
-              child: CircularProgressIndicator(),
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '計算中・・・１〜２分お待ちください',
+                    style: TextStyle(
+                      fontSize: 17.sp,
+                      color: Colors.redAccent,
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.only(bottom: 10.h),
+                  ),
+                  const CircularProgressIndicator(),
+                ],
+              ),
             );
           }
         },
@@ -75,6 +287,7 @@ class _RecommendState extends State<Recommend> {
   Widget _previewVideo() {
 
     if (_controller == null) {
+      //CircularProgressIndicatorをここでいれるかも
       return const Text(
         'You have not yet picked a video',
         textAlign: TextAlign.center,
@@ -89,19 +302,19 @@ class _RecommendState extends State<Recommend> {
 
 
   // もういらないだろうけど、処理したビデオをユーザーに見せる際は使えるかも
-  Future<void> _playVideo(XFile? file) async {
+  Future<void> _playVideo(String file) async {
     print("playvideoに入りました");
     //moutedを消去
     if (file != null) {
       print("Loading Video");
       print("file.path");
-      print(file.path);
+      print(file);
       await _disposeVideoController();
       late VideoPlayerController controller;
       /*if (kIsWeb) {
         controller = VideoPlayerController.network(file.path);
       } else {*/
-      controller = VideoPlayerController.file(File(file.path));
+      controller = VideoPlayerController.file(File(file));
       //}
       _controller = controller;
 

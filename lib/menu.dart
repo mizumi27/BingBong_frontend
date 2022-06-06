@@ -6,40 +6,17 @@ import 'package:video_record_upload/pro_video.dart';
 import 'package:video_record_upload/test.dart';
 import 'package:video_record_upload/stream.dart';
 import 'package:video_record_upload/test.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-const MaterialColor customSwatch = MaterialColor(
-  0xFFB71C1C,
-  <int, Color>{
-    50: Color(0xFFFFEBEE),
-    100: Color(0xFFFFCDD2),
-    200: Color(0xFFEF9A9A),
-    300: Color(0xFFE57373),
-    400: Color(0xFFEF5350),
-    500: Color(0xFFF44336),
-    600: Color(0xFFE53935),
-    700: Color(0xFFD32F2F),
-    800: Color(0xFFC62828),
-    900: Color(0xFFB71C1C),
-  },
-);
 
 class Menu extends StatelessWidget {
   const Menu({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      // 右上に表示される"debug"ラベルを消す
-      debugShowCheckedModeBanner: false,
-      // アプリ名
-      title: 'BingBong',
-      theme: ThemeData(
-        // テーマカラー
-        primarySwatch: customSwatch,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-      ),
+    return const Scaffold(
       // リスト一覧画面を表示
-      home: const Menupage(),
+      body: Menupage(),
     );
   }
 }
@@ -54,55 +31,133 @@ class Menupage extends StatefulWidget {
 
 class _MenuPageState extends State<Menupage> {
   // ignore: non_constant_identifier_names
-  Widget VideoInfo() {
+  Widget VideoInfo(String id) {
     return Column(
       children: [
-        const Padding(
-          padding: EdgeInsets.fromLTRB(1, 5, 1, 5),
+        Padding(
+          padding: EdgeInsets.fromLTRB(1.w, 5.h, 1.w, 5.h),
         ),
         Row(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            const Image(
-              image: AssetImage("assets/image/image004.jpg"),
-              width: 250,
-              height: 125,
+            Image(
+              image: AssetImage("assets/image/thumbnail${id}.jpg"),
+              width: 450.w,
+              height: 225.h,
               fit: BoxFit.fill,
             ),
-            const Image(
-              image: AssetImage("assets/image/image001.jpg"),
-              width: 250,
-              height: 125,
+            Container(
+              width: 5.w,
+              height: 225.h,
+              color: Colors.white,
+            ),
+            Image(
+              image: AssetImage("assets/image/explain${id}.jpg"),
+              width: 450.w,
+              height: 225.h,
               fit: BoxFit.fill,
             ),
-            ElevatedButton(
-              child: const Text('選択'),
-              style: ElevatedButton.styleFrom(
-                primary: Colors.white,
-                onPrimary: Colors.black,
-                shape: const CircleBorder(
-                  side: BorderSide(
-                    color: Colors.black,
-                    width: 1,
-                    style: BorderStyle.solid,
+            Padding(
+              padding: EdgeInsets.only(left: 30.w),
+            ),
+            SizedBox(
+              width: 75.w,
+              height: 75.w,
+              child: ElevatedButton(
+                child: Text(
+                  '選択',
+                  style: TextStyle(
+                    fontSize: 21.sp,
+                    color: Colors.white,
                   ),
                 ),
-              ),
-              onPressed: () async {
-                /*await Navigator.push(
+                style: ElevatedButton.styleFrom(
+                  primary: const Color.fromRGBO(252, 141, 78, 1.0),
+                  onPrimary: Colors.black,
+                  shape: CircleBorder(
+                    side: BorderSide(
+                      color: Colors.white,
+                      width: 1.w,
+                      style: BorderStyle.solid,
+                    ),
+                  ),
+                ),
+                onPressed: () async {
+                  /*await Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => StackedVideoView()),
                 );*/
 
-                //ビデオ取得のテスト
-                final storageRef = FirebaseStorage.instance.ref();
-                final imageUrl = await storageRef.child("/userFiles/PengZhiyu/completely_wrong/recommendation.mp4").getDownloadURL();
-                print(imageUrl);
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => Test()),
-                );
-              },
+                  //ビデオ取得のテスト
+                  //final storageRef = FirebaseStorage.instance.ref();
+                  //final imageUrl = await storageRef.child("/userFiles/PengZhiyu/completely_wrong/recommendation.mp4").getDownloadURL();
+                  //print(imageUrl);
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ProVideo(id)),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget VideoInfo_none(String id) {
+    return Column(
+      children: [
+        Padding(
+          padding: EdgeInsets.fromLTRB(1.w, 5.h, 1.w, 5.h),
+        ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Image(
+              image: AssetImage("assets/image/unpub_thumbnail.jpg"),
+              width: 450.w,
+              height: 225.h,
+              fit: BoxFit.fill,
+            ),
+            Container(
+              width: 5.w,
+              height: 225.h,
+              color: Colors.white,
+            ),
+            Image(
+              image: AssetImage("assets/image/unpub_explain.jpg"),
+              width: 450.w,
+              height: 225.h,
+              fit: BoxFit.fill,
+            ),
+            Padding(
+              padding: EdgeInsets.only(left: 30.w),
+            ),
+            SizedBox(
+              width: 75.w,
+              height: 75.w,
+              child: ElevatedButton(
+                child: Text(
+                  '選択',
+                  style: TextStyle(
+                    fontSize: 21.sp,
+                    color: Colors.white,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  //primary: const Color.fromRGBO(252, 141, 78, 1.0),
+                  onPrimary: Colors.black,
+                  shape: CircleBorder(
+                    side: BorderSide(
+                      color: Colors.white,
+                      width: 1.w,
+                      style: BorderStyle.solid,
+                    ),
+                  ),
+                ),
+                onPressed: null,
+              ),
             ),
           ],
         ),
@@ -112,24 +167,36 @@ class _MenuPageState extends State<Menupage> {
 
   @override
   Widget build(BuildContext context) {
+
+    final Size size = MediaQuery.of(context).size;
+    print(size);
+
     return Scaffold(
       backgroundColor: const Color.fromRGBO(255, 215, 130, 1),
       // AppBarを表示し、タイトルも設定
       appBar: AppBar(
         automaticallyImplyLeading: false,
         centerTitle: true,
-        title: const Image(
+        title: Image(
           image: AssetImage("assets/image/logo.png"),
-          width: 180,
+          width: 180.w,
           fit: BoxFit.fill,
         ),
         actions: <Widget>[
           IconButton(
-            onPressed: () {},
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                content: Text("Sorry... This Function isn't implemented"),
+              ));
+            },
             icon: const Icon(Icons.search),
           ),
           IconButton(
-            onPressed: () {},
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                content: Text("Sorry... This Function isn't implemented"),
+              ));
+            },
             icon: const Icon(Icons.more_vert),
           ),
         ],
@@ -138,14 +205,15 @@ class _MenuPageState extends State<Menupage> {
       body: Center(
         child: Container(
           color: const Color.fromRGBO(255, 215, 130, 1.0),
-          height: 500,
+          height: 750.h,
           width: double.infinity,
           child: SingleChildScrollView(
             child: Column(
               children: <Widget>[
-                for (int i = 0; i < 3; i++) VideoInfo(),
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(1, 5, 1, 5),
+                for (int i = 1; i <= 3; i++) VideoInfo(i.toString()),
+                for (int i = 1; i <= 7; i++) VideoInfo_none(i.toString()),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(1.w, 5.h, 1.w, 5.h),
                 ),
               ],
             ),

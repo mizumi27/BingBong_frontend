@@ -1,33 +1,28 @@
 import 'dart:io';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-
-import 'package:device_info_plus/device_info_plus.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:spring_button/spring_button.dart';
-import 'package:path/path.dart';
-import 'package:video_record_upload/api/firebase_api.dart';
-import 'package:video_record_upload/api/python_api.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:video_record_upload/recommend.dart';
-import 'package:video_record_upload/test.dart';
+
 
 class Review extends StatefulWidget{
-  Review(this.file, {Key? key}) : super(key: key);
+  Review(this.file, this.id, {Key? key}) : super(key: key);
   XFile? file;
+  String id;
   @override
   // ignore: no_logic_in_create_state
-  State<Review> createState() => _ReviewState(file);
+  State<Review> createState() => _ReviewState(file, id);
 }
 
 // ignore: must_be_immutable
 class _ReviewState extends State<Review> {
-  _ReviewState(this.file);
+  _ReviewState(this.file, this.id);
   XFile? file;
+  String id;
   VideoPlayerController? _controller;
   Future? test;
 
@@ -51,32 +46,33 @@ class _ReviewState extends State<Review> {
 
   Widget menuButton(BuildContext context) {
     return SizedBox(
-      height: 85,
-      width: 125,
+      height: 100.h,
+      width: 175.w,
       child: SpringButton(
           SpringButtonType.WithOpacity,
           Padding(
             padding: const EdgeInsets.all(14),
             child: Container(
-              decoration: const BoxDecoration(
-                color: Color.fromRGBO(0, 26, 67, 1),
-                borderRadius: BorderRadius.all(Radius.circular(30.0)),
+              decoration: BoxDecoration(
+                color: const Color.fromRGBO(0, 26, 67, 1),
+                border: Border.all(color: Colors.white),
+                borderRadius: const BorderRadius.all(Radius.circular(30.0)),
               ),
               child: Center(
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
+                  children: [
                     Icon(
                       Icons.arrow_back,
                       color: Colors.white,
-                      size: 30,
+                      size: 50.sp,
                     ),
                     Text(
                       '終了',
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
-                        fontSize: 20,
+                        fontSize: 30.sp,
                       ),
                     ),
                   ],
@@ -95,32 +91,33 @@ class _ReviewState extends State<Review> {
 
   Widget sendButton(BuildContext context) {
     return SizedBox(
-      height: 100,
-      width: 250,
+      height: 115.h,
+      width: 300.w,
       child: SpringButton(
         SpringButtonType.WithOpacity,
         Padding(
           padding: const EdgeInsets.all(12.5),
           child: Container(
-            decoration: const BoxDecoration(
-              color: Color.fromRGBO(203, 44, 0, 1.0),
-              borderRadius: BorderRadius.all(Radius.circular(10.0)),
+            decoration: BoxDecoration(
+              color: const Color.fromRGBO(203, 44, 0, 1.0),
+              border: Border.all(color: Colors.white),
+              borderRadius: const BorderRadius.all(Radius.circular(10.0)),
             ),
             child: Center(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
+                children: [
                   Icon(
                     Icons.file_upload,
                     color: Colors.white,
-                    size: 45,
+                    size: 55.sp,
                   ),
                   Text(
                     '動画を送信',
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
-                      fontSize: 25,
+                      fontSize: 35.sp,
                     ),
                   ),
                 ],
@@ -129,8 +126,12 @@ class _ReviewState extends State<Review> {
           ),
         ),
         onTap: () async {
-          //Firebaseへ送信＆計算＆画面遷移
-          await calculateVideo(file, context);
+
+          //画面遷移(計算はrecommend.dartで行う)
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => Recommend(file, id)),
+          );
 
           print("Video Path ${file!.path}");
           //_controller?.play();
@@ -141,32 +142,33 @@ class _ReviewState extends State<Review> {
 
   Widget retakeButton(BuildContext context) {
     return SizedBox(
-      height: 85,
-      width: 150,
+      height: 100.h,
+      width: 230.w,
       child: SpringButton(
           SpringButtonType.WithOpacity,
           Padding(
             padding: const EdgeInsets.all(14),
             child: Container(
-              decoration: const BoxDecoration(
-                color: Color.fromRGBO(125, 2, 10, 1.0),
-                borderRadius: BorderRadius.all(Radius.circular(30.0)),
+              decoration: BoxDecoration(
+                color: const Color.fromRGBO(125, 2, 10, 1.0),
+                border: Border.all(color: Colors.white),
+                borderRadius: const BorderRadius.all(Radius.circular(30.0)),
               ),
               child: Center(
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
+                  children: [
                     Icon(
                       Icons.refresh,
                       color: Colors.white,
-                      size: 30,
+                      size: 50.sp,
                     ),
                     Text(
                       '撮り直す',
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
-                        fontSize: 20,
+                        fontSize: 30.sp,
                       ),
                     ),
                   ],
@@ -186,6 +188,7 @@ class _ReviewState extends State<Review> {
   Widget build(BuildContext context) {
 
     return Scaffold(
+      backgroundColor: const Color.fromRGBO(255, 215, 130, 1),
       body: FutureBuilder(
         future: test,
         builder: (BuildContext context, AsyncSnapshot snapshot) {
@@ -203,10 +206,9 @@ class _ReviewState extends State<Review> {
                   child: menuButton(context),
                 ),
                 Align(
-                  alignment: const Alignment(0.98, 1.02),
+                  alignment: const Alignment(0.87, 1.02),
                   child: retakeButton(context),
                 ),
-
               ],
             );
           } else {
@@ -236,6 +238,12 @@ class _ReviewState extends State<Review> {
 
   // もういらないだろうけど、処理したビデオをユーザーに見せる際は使えるかも
   Future<void> _playVideo(XFile? file) async {
+
+    await SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
+
     //moutedを消去
     if (file != null) {
       print("Loading Video");
@@ -257,6 +265,11 @@ class _ReviewState extends State<Review> {
       await controller.initialize();
       await controller.setLooping(true);
       await controller.play();
+
+      await SystemChrome.setPreferredOrientations([
+        DeviceOrientation.landscapeLeft,
+        DeviceOrientation.landscapeRight,
+      ]);
     }
     else
     {
@@ -272,69 +285,8 @@ class _ReviewState extends State<Review> {
   }
 }
 
-Future<void> calculateVideo(XFile? videoFile, BuildContext context) async {
-  print("Uploading Video");
-
-  if (videoFile == null) return;
-
-  //AndroidかiOSかを確認
-  DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
-  String? userID;
-  if(Platform.isAndroid) {
-    AndroidDeviceInfo infoID = await deviceInfo.androidInfo;
-    userID = infoID.androidId;
-    print('Runnning on ${infoID.androidId}');
-  }
-  else if(Platform.isIOS) {
-    IosDeviceInfo infoID = await deviceInfo.iosInfo;
-    userID = infoID.identifierForVendor;
-    print('Runnning on ${infoID.identifierForVendor}');
-  }
-  else {
-    //その他の機器の場合、noNameフォルダへ送信
-    userID = "noName";
-  }
-
-  //Convert so it can be uploaded
-  File file = File(videoFile.path);
-
-  final fileName = basename(file.path);
-  final folderName = fileName.substring(0, fileName.length - 4);
-  final firebaseDest = 'userFiles/$userID/$folderName/$fileName';
-
-  print("A");
-  print(fileName);
-  print(firebaseDest);
-  print("B");
-
-  //await FirebaseApi.uploadFile(firebaseDest, file);
-
-  //python APIを叩く→firebaseに入ってる場所を取得できる
-  //final response = await http.get(Uri.parse('http://10.0.2.2:5000/api/user_videos?user_id=${userID}&video_id=${folderName}'));
-  //final response = await http.get(Uri.parse('https://joshuaravishankar-fa39413gbz992ckl.socketxp.com/api/?user_id=${userID}&video_id={$folderName}&technique_id=forehand_shakehold'));
-  //final response = await http.get(Uri.parse('https://joshuaravishankar-fa39413gbz992ckl.socketxp.com/api/?user_id=PengZhiyu&video_id=completely_wrong&technique_id=forehand_shakehold'));
-  //print(response.statusCode);
-  //print(jsonDecode(response.body));
-  //print(response.body);
-
-  //firebaseからもってくる処理
-  //XFile videoLocation = await FirebaseApi.downloadFile("userFiles/PengZhiyu/completely_wrong/recommendation.mp4");
-  print("download OK");
-
-  final storageRef = FirebaseStorage.instance.ref();
-  final imageUrl = await storageRef.child("userFiles/PengZhiyu/completely_wrong/recommendation.mp4").getDownloadURL();
-
-  //final videoData = FirebaseApi.downloadFile(firebaseDest);
-
-  //画面遷移
-  /*Navigator.push(
-    context,
-    MaterialPageRoute(builder: (context) => Test(imageUrl)),
-  );*/
-}
-
 class AspectRatioVideo extends StatefulWidget {
-  AspectRatioVideo(this.controller);
+  const AspectRatioVideo(this.controller);
 
   final VideoPlayerController? controller;
 

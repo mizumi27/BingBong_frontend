@@ -1,31 +1,31 @@
-import 'dart:io';
-
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:video_player/video_player.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:spring_button/spring_button.dart';
-import 'package:path/path.dart';
-import 'package:video_record_upload/api/firebase_api.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:video_record_upload/review.dart';
 
+
 class ProVideo extends StatefulWidget{
-  const ProVideo({Key? key}) : super(key: key);
+  ProVideo(this.id, {Key? key}) : super(key: key);
+  String id;
 
   @override
-  State<ProVideo> createState() => _ProVideoState();
+  State<ProVideo> createState() => _ProVideoState(id);
 }
 
 class _ProVideoState extends State<ProVideo> {
+
+  _ProVideoState(this.id);
+  String id;
+
   final ImagePicker _picker = ImagePicker();
   VideoPlayerController? _controller;
 
   @override
   void initState() {
-    _controller = VideoPlayerController.asset('assets/forehand_shakehold.mp4');
+    _controller = VideoPlayerController.asset('assets/video/video$id.mp4');
     _controller?.initialize().then((_) {
       // 最初のフレームを描画するため初期化後に更新
       setState(() {});
@@ -50,32 +50,33 @@ class _ProVideoState extends State<ProVideo> {
 
   Widget menuButton(BuildContext context) {
     return SizedBox(
-      height: 85,
-      width: 125,
+      height: 100.h,
+      width: 175.w,
       child: SpringButton(
         SpringButtonType.WithOpacity,
         Padding(
           padding: const EdgeInsets.all(14),
           child: Container(
-            decoration: const BoxDecoration(
-              color: Color.fromRGBO(0, 26, 67, 1),
-              borderRadius: BorderRadius.all(Radius.circular(30.0)),
+            decoration: BoxDecoration(
+              color: const Color.fromRGBO(0, 26, 67, 1),
+              border: Border.all(color: Colors.white),
+              borderRadius: const BorderRadius.all(Radius.circular(30.0)),
             ),
             child: Center(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
+                children: [
                   Icon(
                     Icons.arrow_back,
                     color: Colors.white,
-                    size: 30,
+                    size: 50.sp,
                   ),
                   Text(
                     '戻る',
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
-                      fontSize: 20,
+                      fontSize: 30.sp,
                     ),
                   ),
                 ],
@@ -93,32 +94,33 @@ class _ProVideoState extends State<ProVideo> {
 
   Widget cameraButton(BuildContext context) {
     return SizedBox(
-      height: 100,
-      width: 250,
+      height: 115.h,
+      width: 300.w,
       child: SpringButton(
         SpringButtonType.WithOpacity,
         Padding(
           padding: const EdgeInsets.all(12.5),
           child: Container(
-            decoration: const BoxDecoration(
-              color: Color.fromRGBO(125, 2, 10, 1.0),
-              borderRadius: BorderRadius.all(Radius.circular(10.0)),
+            decoration:BoxDecoration(
+              color: const Color.fromRGBO(125, 2, 10, 1.0),
+              border: Border.all(color: Colors.white),
+              borderRadius: const BorderRadius.all(Radius.circular(10.0)),
             ),
             child: Center(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
+                children: [
                   Icon(
                     Icons.videocam_rounded,
                     color: Colors.white,
-                    size: 45,
+                    size: 55.sp,
                   ),
                   Text(
                     '動画を撮影',
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
-                      fontSize: 25,
+                      fontSize: 35.sp,
                     ),
                   ),
                 ],
@@ -133,31 +135,19 @@ class _ProVideoState extends State<ProVideo> {
               source: ImageSource.camera,
               maxDuration: const Duration(seconds: 10)
           );
-          print("kokoniiruyo!!!!!!!");
-          setState(() {
-
-          });
 
           //動画を撮影しなかったときの処理
           if(file != null) {
             await Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => Review(file)),
+              MaterialPageRoute(builder: (context) => Review(file, id)),
             ).then((value) async {
               print("1");
-              //_controller = VideoPlayerController.asset('assets/water.mp4');
-              print("2");
             });
           }
-
           //await _controller?.initialize();
           await _controller?.setLooping(true);
           await _controller?.play();
-          print("4");
-          //戻ってくるときにcontrollerをdisposeする必要がありそう
-
-          print("Video Path ${file!.path}");
-          //_controller?.play();
         },
       ),
     );
@@ -166,6 +156,7 @@ class _ProVideoState extends State<ProVideo> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color.fromRGBO(255, 215, 130, 1),
       body: Stack(
         children: [
           //ここでプロの動画を再生したい
