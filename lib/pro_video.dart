@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:spring_button/spring_button.dart';
@@ -38,12 +39,14 @@ class _ProVideoState extends State<ProVideo> {
 
   @override
   void dispose() {
+    print("dispose");
     _controller?.dispose();
     super.dispose();
   }
 
   @override
   void deactivate() {
+    print("deactivate");
     _controller?.pause();
     super.deactivate();
   }
@@ -140,7 +143,15 @@ class _ProVideoState extends State<ProVideo> {
           if(file != null) {
             await Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => Review(file, id)),
+              MaterialPageRoute(builder: (context) {
+                WidgetsFlutterBinding.ensureInitialized();
+                SystemChrome.setPreferredOrientations([
+                  DeviceOrientation.landscapeLeft, //横固定
+                  DeviceOrientation.landscapeRight,
+                ]);
+                print(MediaQuery.of(context).orientation);
+                return Review(file, id);
+              }),
             ).then((value) async {
               print("1");
             });

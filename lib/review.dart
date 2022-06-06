@@ -10,6 +10,7 @@ import 'package:video_record_upload/recommend.dart';
 
 
 class Review extends StatefulWidget{
+
   Review(this.file, this.id, {Key? key}) : super(key: key);
   XFile? file;
   String id;
@@ -239,11 +240,6 @@ class _ReviewState extends State<Review> {
   // もういらないだろうけど、処理したビデオをユーザーに見せる際は使えるかも
   Future<void> _playVideo(XFile? file) async {
 
-    await SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
-
     //moutedを消去
     if (file != null) {
       print("Loading Video");
@@ -265,6 +261,8 @@ class _ReviewState extends State<Review> {
       await controller.initialize();
       await controller.setLooping(true);
       await controller.play();
+
+      WidgetsFlutterBinding.ensureInitialized();
 
       await SystemChrome.setPreferredOrientations([
         DeviceOrientation.landscapeLeft,

@@ -36,6 +36,7 @@ class _RecommendState extends State<Recommend> {
   String id;
   VideoPlayerController? _controller;
   Future? test;
+  int error_flag = 0;
 
   @override
   void initState() {
@@ -98,7 +99,7 @@ class _RecommendState extends State<Recommend> {
 
     //idによって動画のジャンルを決定(時間がないので直感的なコードを書いた)
     String genre;
-    if(id == "1") genre = "forehand_shakehold_drive";
+    if(id == "1") genre = "forehand_shakehold";
     else if(id == "2") genre = "backhand_shakehold_drive";
     else if(id == "3") genre = "forehand_shakehold_slice";
     else genre = "backhand_shakehold_drive";
@@ -107,43 +108,54 @@ class _RecommendState extends State<Recommend> {
 
     //python APIを叩く→firebaseに入ってる場所を取得できる
     //Assertion Error(計算できない)の場合は動画を取り直す画面を表示したい
-    //final response = await http.get(Uri.parse('https://joshuaravishankar-fa39413gbz992ckl.socketxp.com/api/?user_id=${userID}&video_id=${folderName}&technique_id=${genre}'));
-    final response = await http.get(Uri.parse('https://joshuaravishankar-fa39413gbz992ckl.socketxp.com/api/?user_id=PengZhiyu&video_id=completely_wrong&technique_id=forehand_shakehold'));
-    print(response.statusCode);
-    print("nomal response.body:");
-    print(response.body);
-    print("response owari");
+    String? responseDict;
+    try{
+      //final response = await http.get(Uri.parse('https://joshuaravishankar-fa39413gbz992ckl.socketxp.com/api/?user_id=${userID}&video_id=${folderName}&technique_id=${genre}'));
+      final response = await http.get(Uri.parse('https://joshuaravishankar-fa39413gbz992ckl.socketxp.com/api/?user_id=PengZhiyu&video_id=completely_wrong&technique_id=forehand_shakehold'));
+      print(response.statusCode);
+      print("nomal response.body:");
+      print(response.body);
+      print("response owari");
 
-    Map<String, String> responseMap = json.decode(response.body[0]);
-    final responseDict = responseMap['dest'];
-
-    print("responseDict:");
-    print(responseDict);
-
-
-
-    //firebaseからもってくる処理
-    final storageRef = FirebaseStorage.instance.ref();
-    print("storegeRef");
-    print(storageRef);
-    final ref = storageRef.child("/userFiles/PengZhiyu/completely_wrong/recommendation.mp4");
-    //final ref = storageRef.child("/" + responseDict!);
-    print("ref");
-    print(ref);
-    final url = await ref.getDownloadURL();
-    print("url");
-    print(url);
-
-    final tempDir = await getTemporaryDirectory();
-    final path = '${tempDir.path}/${ref.name}';
-    await Dio().download(url, path);
-
-    if (url.contains('.mp4')) {
-      await GallerySaver.saveVideo(path, toDcim: true);
+      final responseMap = await jsonDecode(response.body);
+      print("responseMap");
+      print(responseMap);
+      print(responseMap[0]);
+      responseDict = responseMap[0]['dest'];
+      print("responseDict:");
+      print(responseDict);
+    } catch(e) {
+      //エラーフラグをたてる
+      error_flag = 1;
     }
 
-    //このresultFileにFlackAPIからFirebaseからダウンロードしてきた動画のアドレスを入れる
-    await _playVideo('${tempDir.path}/${ref.name}');
+    //エラーがなかった時の処理
+    if(error_flag == 0) {
+
+
+      //firebaseからもってくる処理
+      final storageRef = FirebaseStorage.instance.ref();
+      print("storegeRef");
+      print(storageRef);
+      //final ref = storageRef.child("/userFiles/PengZhiyu/completely_wrong/recommendation.mp4");
+      final ref = storageRef.child("/" + responseDict!);
+      print("ref");
+      print(ref);
+      final url = await ref.getDownloadURL();
+      print("url");
+      print(url);
+
+      final tempDir = await getTemporaryDirectory();
+      final path = '${tempDir.path}/${ref.name}';
+      await Dio().download(url, path);
+
+      if (url.contains('.mp4')) {
+        await GallerySaver.saveVideo(path, toDcim: true);
+      }
+
+      //このresultFileにFlackAPIからFirebaseからダウンロードしてきた動画のアドレスを入れる
+      await _playVideo('${tempDir.path}/${ref.name}');
+    }
   }
 
   Widget menuButton(BuildContext context) {
@@ -246,38 +258,95 @@ class _RecommendState extends State<Recommend> {
         future: test,
         builder: (BuildContext context, AsyncSnapshot snapshot) {
           if(snapshot.connectionState == ConnectionState.done) {
-
-            return Stack(
-              children: [
-                _previewVideo(),
-                Align(
-                  alignment: const Alignment(-0.87, 1.02),
-                  child: menuButton(context),
-                ),
-                Align(
-                  alignment: const Alignment(0.87, 1.02),
-                  child: retakeButton(context),
-                ),
-              ],
-            );
-          } else {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '計算中・・・１〜２分お待ちください',
-                    style: TextStyle(
-                      fontSize: 17.sp,
-                      color: Colors.redAccent,
+            if(error_flag == 1) {
+              //エラー画面を表示
+              return WillPopScope(
+                child: Stack(
+                  children: [
+                    Align(
+                      alignment: const Alignment(0, -0.3),
+                      child: Image(
+                        image: const AssetImage("assets/image/sorry.png"),
+                        width: 300.w,
+                        height: 300.h,
+                        fit: BoxFit.fill,
+                      ),
                     ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(bottom: 10.h),
-                  ),
-                  const CircularProgressIndicator(),
-                ],
+                    Align(
+                      alignment: const Alignment(0, 0.4),
+                      child: Text(
+                        "【エラー】もう一度動画を撮り直してください",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 35.sp,
+                        ),
+                      ),
+                    ),
+                    Align(
+                      alignment: const Alignment(-0.87, 1.02),
+                      child: menuButton(context),
+                    ),
+                    Align(
+                      alignment: const Alignment(0.87, 1.02),
+                      child: retakeButton(context),
+                    ),
+                  ],
+                ),
+                onWillPop: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).pop();
+                  return Future.value(false);
+                },
+              );
+            } else {
+              //レコメンド画面を表示
+              return WillPopScope(
+                child: Stack(
+                  children: [
+                    _previewVideo(),
+                    Align(
+                      alignment: const Alignment(-0.87, 1.02),
+                      child: menuButton(context),
+                    ),
+                    Align(
+                      alignment: const Alignment(0.87, 1.02),
+                      child: retakeButton(context),
+                    ),
+                  ],
+                ),
+                onWillPop: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).pop();
+                  return Future.value(false);
+                },
+              );
+            }
+
+          } else {
+            return WillPopScope(
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '計算中・・・１〜２分お待ちください',
+                      style: TextStyle(
+                        fontSize: 20.sp,
+                        color: Colors.redAccent,
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.only(bottom: 10.h),
+                    ),
+                    const CircularProgressIndicator(),
+                  ],
+                ),
               ),
+              onWillPop: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pop();
+                return Future.value(false);
+              },
             );
           }
         },
@@ -303,12 +372,10 @@ class _RecommendState extends State<Recommend> {
 
   // もういらないだろうけど、処理したビデオをユーザーに見せる際は使えるかも
   Future<void> _playVideo(String file) async {
-    print("playvideoに入りました");
+
     //moutedを消去
     if (file != null) {
-      print("Loading Video");
-      print("file.path");
-      print(file);
+
       await _disposeVideoController();
       late VideoPlayerController controller;
       /*if (kIsWeb) {

@@ -8,7 +8,7 @@ import 'package:video_record_upload/tutorial.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setPreferredOrientations([
+  await SystemChrome.setPreferredOrientations([
     DeviceOrientation.landscapeLeft, //横固定
     DeviceOrientation.landscapeRight,
   ]);
