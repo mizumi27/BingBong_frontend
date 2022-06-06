@@ -83,15 +83,6 @@ class _MenuPageState extends State<Menupage> {
                   ),
                 ),
                 onPressed: () async {
-                  /*await Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => StackedVideoView()),
-                );*/
-
-                  //ビデオ取得のテスト
-                  //final storageRef = FirebaseStorage.instance.ref();
-                  //final imageUrl = await storageRef.child("/userFiles/PengZhiyu/completely_wrong/recommendation.mp4").getDownloadURL();
-                  //print(imageUrl);
                   await Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => ProVideo(id)),

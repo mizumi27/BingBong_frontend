@@ -95,7 +95,7 @@ class _RecommendState extends State<Recommend> {
 
 
     //撮影した動画をFirebaseに送信
-    //await FirebaseApi.uploadFile(firebaseDest, filePath);
+    await FirebaseApi.uploadFile(firebaseDest, filePath);
 
     //idによって動画のジャンルを決定(時間がないので直感的なコードを書いた)
     String genre;
@@ -110,8 +110,8 @@ class _RecommendState extends State<Recommend> {
     //Assertion Error(計算できない)の場合は動画を取り直す画面を表示したい
     String? responseDict;
     try{
-      //final response = await http.get(Uri.parse('https://joshuaravishankar-fa39413gbz992ckl.socketxp.com/api/?user_id=${userID}&video_id=${folderName}&technique_id=${genre}'));
-      final response = await http.get(Uri.parse('https://joshuaravishankar-fa39413gbz992ckl.socketxp.com/api/?user_id=PengZhiyu&video_id=completely_wrong&technique_id=forehand_shakehold'));
+      final response = await http.get(Uri.parse('https://joshuaravishankar-fa39413gbz992ckl.socketxp.com/api/?user_id=${userID}&video_id=${folderName}&technique_id=${genre}'));
+      //final response = await http.get(Uri.parse('https://joshuaravishankar-fa39413gbz992ckl.socketxp.com/api/?user_id=PengZhiyu&video_id=completely_wrong&technique_id=forehand_shakehold'));
       print(response.statusCode);
       print("nomal response.body:");
       print(response.body);
@@ -232,7 +232,7 @@ class _RecommendState extends State<Recommend> {
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
-                        fontSize: 30.sp,
+                        fontSize: 40.sp,
                       ),
                     ),
                   ],
